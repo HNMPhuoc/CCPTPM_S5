@@ -1,4 +1,5 @@
 let mongoose = require('mongoose');
+let { createSlug } = require('../utils/slugHelper');
 let productSchema = mongoose.Schema({
     name:{
         type:String,
@@ -29,12 +30,23 @@ let productSchema = mongoose.Schema({
         ref:'category',
         required:true
     },
+    slug: {
+        type: String,
+        required: false,
+        unique: true
+    },
     isDeleted:{
         type:Boolean,
         default:false
     }
 },{
     timestamps:true
-})
+});
+productSchema.pre('validate', function (next) {
+    if (!this.slug || this.isModified('name')) {
+        this.slug = createSlug(this.name);
+    }
+    next();
+});
 module.exports = mongoose.model('product',productSchema)
 // products

@@ -25,7 +25,24 @@ router.get('/:id', async function(req, res, next) {
     next(error)
   }
 });
-router.post('/', check_authorization(constants.MOD_PERMISSION), async function(req, res, next) {
+router.get('/slug/:slugcategory/:slugproduct', async (req, res) => {
+  try {
+      const { slugcategory, slugproduct } = req.params;
+
+      const category = await categoryModel.findOne({ slug: slugcategory });
+      if (!category) return res.status(404).json({ message: 'Category not found' });
+
+      const product = await productModel.findOne({ slug: slugproduct, category: category._id });
+      if (!product) return res.status(404).json({ message: 'Product not found' });
+
+      res.json(product);
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+});
+router.post('/', 
+  // check_authorization(constants.MOD_PERMISSION), 
+  async function(req, res, next) {
   try {
     let body = req.body
     let category = await categoryModel.findOne({
@@ -37,7 +54,8 @@ router.post('/', check_authorization(constants.MOD_PERMISSION), async function(r
         price:body.price,
         quantity:body.quantity,
         category:category._id
-      })
+      });
+      await newProduct.validate();
       await newProduct.save();
       CreateSuccessRes(res,newProduct,200);
     }else{
